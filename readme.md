@@ -23,7 +23,7 @@ A dynamic, user-friendly Streamlit application for predicting customer churn usi
 ---
 
 ## 📦 Project Structure
-<pre>\`\`\`
+<pre>
 churn-prediction-ml-app/
 ├── app.py                           # 🚀 Main Streamlit entry point
 ├── requirements.txt                 # Project dependencies
@@ -46,7 +46,7 @@ churn-prediction-ml-app/
 │   │
 │   └── visualization/
 │       └── dashboard.py             # ✅ Visualizer (Streamlit charts & preview)
-\`\`\`</pre>
+</pre>
 ### ✅ Install Requirements
 
 ```bash
