@@ -5,7 +5,7 @@ import plotly.express as px
 import pandas as pd
 
 class Visualizer:
-    def __init__(self, df: pd.DataFrame, prediction_col: str = 'churn_prediction'):
+    def __init__(self, df: pd.DataFrame, prediction_col: str = 'prediction'):
         self.df = df
         self.prediction_col = prediction_col
 
@@ -50,7 +50,9 @@ class Visualizer:
         elif selected == "Not Churned":
             data = self.df[self.df[self.prediction_col] == 0]
         else:
-            data = self.df
+            data = self.df.head(50000)
+            
+        data = data.sample(n=min(len(data), 50000), random_state=42)
 
         numeric_cols = data.select_dtypes(include='number').drop(columns=[self.prediction_col], errors='ignore')
 

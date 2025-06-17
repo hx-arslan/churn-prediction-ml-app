@@ -26,6 +26,6 @@ class DataCleaner:
         self.df.bfill(inplace=True)
 
         # Detect churn column (if any)
-        self.detect_churn_column()
+        # self.detect_churn_column()
 
-        return self.df, self.churn_column
+        return self.df

@@ -2,15 +2,20 @@
 
 import joblib
 import os
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
+from sklearn.linear_model import LogisticRegression, RidgeClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
 from xgboost import XGBClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score,f1_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 
 class ModelHandler:
-    def __init__(self, model_path='models/churn_model.pkl'):
+    def __init__(self, model_path='models/churn_model.pkl',model_type="Automatic (best accuracy)"):
         self.model_path = model_path
+        self.model_type=model_type
         self.model = None
         self.selected_model_name = None
         
@@ -22,29 +27,80 @@ class ModelHandler:
 
     def train(self, X, y):
         models = {
-            "RandomForest": RandomForestClassifier(n_estimators=100, random_state=42),
-            "LogisticRegression": LogisticRegression(max_iter=1000),
-            "XGBoost": XGBClassifier(eval_metric='logloss')
+            "Random Forest": RandomForestClassifier(n_estimators=100, random_state=42),
+            "Logistic Regression": LogisticRegression(max_iter=1000),
+            "Decision Tree": DecisionTreeClassifier(random_state=42),
+            "XGBoost": XGBClassifier(eval_metric='logloss', use_label_encoder=False),
+            "Gradient Boosting": GradientBoostingClassifier(),
+            "AdaBoost": AdaBoostClassifier(),
+            "Ridge Classifier": RidgeClassifier(),
+            "Gaussian Naive Bayes": GaussianNB(),
+            "K-Nearest Neighbors": KNeighborsClassifier(),
+            "Support Vector Machine": SVC(probability=True)
         }
 
-        best_model = None
-        best_accuracy = 0.0
-        best_model_name = None
+        X_train, X_test, y_train, y_test = self.split_data(X, y)
+        self.model_report = []
 
-        for name, model in models.items():
-            model.fit(X, y)
-            y_pred = model.predict(X)
-            acc = accuracy_score(y, y_pred)
-            print(f"🔍 {name} Accuracy: {acc:.7f}")
+        if self.model_type == "Automatic (best accuracy)":
+            best_accuracy = 0.0
+            best_model = None
+            best_model_name = None
 
-            if acc > best_accuracy:
-                best_accuracy = acc
-                best_model = model
-                best_model_name = name
+            for name, model in models.items():
+                try:
+                    model.fit(X_train, y_train)
+                    y_pred = model.predict(X_test)
+                    acc = accuracy_score(y_test, y_pred)
+                    f1 = f1_score(y_test, y_pred, average="binary")
+                    auc = roc_auc_score(y_test, model.predict_proba(X_test)[:, 1]) if hasattr(model, "predict_proba") else float("nan")
 
-        self.model = best_model
-        self.selected_model_name = best_model_name
-        print(f"✅ Best model selected: {best_model_name} with accuracy {best_accuracy:.4f}")
+                    self.model_report.append({
+                        "Model": name,
+                        "Accuracy": acc,
+                        "F1 Score": f1,
+                        "ROC AUC": auc
+                    })
+
+                    if acc > best_accuracy:
+                        best_accuracy = acc
+                        best_model = model
+                        best_model_name = name
+                except Exception as e:
+                    print(f"⚠️ Error training {name}: {e}")
+
+            self.model = best_model
+            self.selected_model_name = best_model_name
+
+        else:
+            model = models.get(self.model_type)
+            if model is None:
+                raise ValueError(f"Unknown model type: {self.model_type}")
+
+            try:
+                model.fit(X_train, y_train)
+                y_pred = model.predict(X_test)
+                acc = accuracy_score(y_test, y_pred)
+                f1 = f1_score(y_test, y_pred, average="binary")
+                auc = roc_auc_score(y_test, model.predict_proba(X_test)[:, 1]) if hasattr(model, "predict_proba") else float("nan")
+
+                self.model_report.append({
+                    "Model": self.model_type,
+                    "Accuracy": acc,
+                    "F1 Score": f1,
+                    "ROC AUC": auc
+                })
+
+                self.model = model
+                self.selected_model_name = self.model_type
+
+            except Exception as e:
+                print(f"⚠️ Error training selected model {self.model_type}: {e}")
+                raise e
+
+        print(f"\n✅ Selected Model: {self.selected_model_name}")
+        for r in self.model_report:
+            print(f"{r['Model']:25} | Acc: {r['Accuracy']:.3f} | F1: {r['F1 Score']:.3f} | AUC: {r['ROC AUC']:.3f}")
 
         return self.model
 
