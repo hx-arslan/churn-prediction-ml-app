@@ -130,6 +130,7 @@ venv.bak/
 .vscode
 vscode/
 logs/
+models/*
 # Spyder project settings
 .spyderproject
 .spyproject
