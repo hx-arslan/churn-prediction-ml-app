@@ -98,3 +98,12 @@ class Visualizer:
         #     filtered_df = self.df
 
         st.dataframe(self.df.head(100), use_container_width=True)
+        
+    def show_model_metrics(self,metrics):
+        st.subheader("📊 Model Evaluation Summary")
+
+        st.markdown(f"**🧠 {metrics["Model"]}**")
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Accuracy", metrics["Accuracy"])
+        col2.metric("F1 Score", metrics["F1 Score"])
+        col3.metric("ROC AUC", metrics["ROC AUC"])

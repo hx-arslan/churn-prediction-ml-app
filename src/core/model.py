@@ -30,18 +30,18 @@ class ModelHandler:
             "Random Forest": RandomForestClassifier(n_estimators=100, random_state=42),
             "Logistic Regression": LogisticRegression(max_iter=1000),
             "Decision Tree": DecisionTreeClassifier(random_state=42),
-            "XGBoost": XGBClassifier(eval_metric='logloss', use_label_encoder=False),
+            "XGBoost": XGBClassifier(eval_metric='logloss'),
             "Gradient Boosting": GradientBoostingClassifier(),
             "AdaBoost": AdaBoostClassifier(),
             "Ridge Classifier": RidgeClassifier(),
             "Gaussian Naive Bayes": GaussianNB(),
             "K-Nearest Neighbors": KNeighborsClassifier(),
-            "Support Vector Machine": SVC(probability=True)
+            "Support Vector Machine": SVC(probability=False)
         }
 
         X_train, X_test, y_train, y_test = self.split_data(X, y)
         self.model_report = []
-
+        self.best_model_report=None
         if self.model_type == "Automatic (best accuracy)":
             best_accuracy = 0.0
             best_model = None
@@ -57,9 +57,9 @@ class ModelHandler:
 
                     self.model_report.append({
                         "Model": name,
-                        "Accuracy": acc,
-                        "F1 Score": f1,
-                        "ROC AUC": auc
+                        "Accuracy": acc*100,
+                        "F1 Score": f1*100,
+                        "ROC AUC": auc*100
                     })
 
                     if acc > best_accuracy:
@@ -86,9 +86,9 @@ class ModelHandler:
 
                 self.model_report.append({
                     "Model": self.model_type,
-                    "Accuracy": acc,
-                    "F1 Score": f1,
-                    "ROC AUC": auc
+                    "Accuracy": acc*100,
+                    "F1 Score": f1*100,
+                    "ROC AUC": auc*100
                 })
 
                 self.model = model
@@ -101,8 +101,14 @@ class ModelHandler:
         print(f"\n✅ Selected Model: {self.selected_model_name}")
         for r in self.model_report:
             print(f"{r['Model']:25} | Acc: {r['Accuracy']:.3f} | F1: {r['F1 Score']:.3f} | AUC: {r['ROC AUC']:.3f}")
-
-        return self.model
+            if r['Model']==self.selected_model_name:
+                self.best_model_report={
+                    "Model": r['Model'],
+                    "Accuracy": f'{r['Accuracy']:.3f}',
+                    "F1 Score": f'{r['F1 Score']:.3f}',
+                    "ROC AUC": f'{r['ROC AUC']:.3f}'
+                }
+        return self.model,self.best_model_report
 
     def save(self):
         if self.model is None:
