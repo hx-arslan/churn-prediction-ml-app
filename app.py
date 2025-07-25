@@ -28,8 +28,8 @@ def next_step():
 def prev_step():
     st.session_state.step -= 1
 
-st.set_page_config(page_title="Churn Prediction", layout="wide", initial_sidebar_state="auto")
-st.title("\U0001F4C9 Churn Prediction App")
+st.set_page_config(page_title="PredictFlex", layout="wide", initial_sidebar_state="auto")
+st.title("\U0001F4C9 PredictFlex")
 
 # Sidebar inputs
 st.sidebar.header("Upload & Model Options")
