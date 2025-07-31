@@ -2,11 +2,9 @@
 
 import joblib
 import os
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
-from sklearn.linear_model import LogisticRegression, RidgeClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score,f1_score, roc_auc_score
@@ -26,22 +24,54 @@ class ModelHandler:
         return X_train, X_test, y_train, y_test
 
     def train(self, X, y):
+        # Optimized model configurations for better performance
         models = {
-            "Random Forest": RandomForestClassifier(n_estimators=100, random_state=42),
-            "Logistic Regression": LogisticRegression(max_iter=1000),
-            "Decision Tree": DecisionTreeClassifier(random_state=42),
-            "XGBoost": XGBClassifier(eval_metric='logloss'),
-            "Gradient Boosting": GradientBoostingClassifier(),
-            "AdaBoost": AdaBoostClassifier(),
-            "Ridge Classifier": RidgeClassifier(),
-            "Gaussian Naive Bayes": GaussianNB(),
-            "K-Nearest Neighbors": KNeighborsClassifier(),
-            "Support Vector Machine": SVC(probability=False)
+            "Random Forest": RandomForestClassifier(
+                n_estimators=200, 
+                max_depth=10, 
+                min_samples_split=5,
+                min_samples_leaf=2,
+                random_state=42
+            ),
+            "XGBoost": XGBClassifier(
+                n_estimators=200,
+                max_depth=6,
+                learning_rate=0.1,
+                subsample=0.8,
+                colsample_bytree=0.8,
+                random_state=42,
+                eval_metric='logloss'
+            ),
+            "Logistic Regression": LogisticRegression(
+                max_iter=1000,
+                C=1.0,
+                random_state=42
+            ),
+            "Gradient Boosting": GradientBoostingClassifier(
+                n_estimators=200,
+                max_depth=6,
+                learning_rate=0.1,
+                subsample=0.8,
+                random_state=42
+            ),
+            "Decision Tree": DecisionTreeClassifier(
+                max_depth=8,
+                min_samples_split=10,
+                min_samples_leaf=5,
+                random_state=42
+            ),
+            "Support Vector Machine": SVC(
+                C=1.0,
+                kernel='rbf',
+                probability=True,
+                random_state=42
+            )
         }
 
         X_train, X_test, y_train, y_test = self.split_data(X, y)
         self.model_report = []
         self.best_model_report=None
+        
         if self.model_type == "Automatic (best accuracy)":
             best_accuracy = 0.0
             best_model = None
@@ -53,7 +83,15 @@ class ModelHandler:
                     y_pred = model.predict(X_test)
                     acc = accuracy_score(y_test, y_pred)
                     f1 = f1_score(y_test, y_pred, average="binary")
-                    auc = roc_auc_score(y_test, model.predict_proba(X_test)[:, 1]) if hasattr(model, "predict_proba") else float("nan")
+                    
+                    # Calculate ROC AUC safely
+                    try:
+                        if hasattr(model, "predict_proba"):
+                            auc = roc_auc_score(y_test, model.predict_proba(X_test)[:, 1])
+                        else:
+                            auc = float("nan")
+                    except:
+                        auc = float("nan")
 
                     self.model_report.append({
                         "Model": name,
@@ -66,6 +104,7 @@ class ModelHandler:
                         best_accuracy = acc
                         best_model = model
                         best_model_name = name
+                        
                 except Exception as e:
                     print(f"⚠️ Error training {name}: {e}")
 
@@ -82,7 +121,15 @@ class ModelHandler:
                 y_pred = model.predict(X_test)
                 acc = accuracy_score(y_test, y_pred)
                 f1 = f1_score(y_test, y_pred, average="binary")
-                auc = roc_auc_score(y_test, model.predict_proba(X_test)[:, 1]) if hasattr(model, "predict_proba") else float("nan")
+                
+                # Calculate ROC AUC safely
+                try:
+                    if hasattr(model, "predict_proba"):
+                        auc = roc_auc_score(y_test, model.predict_proba(X_test)[:, 1])
+                    else:
+                        auc = float("nan")
+                except:
+                    auc = float("nan")
 
                 self.model_report.append({
                     "Model": self.model_type,
