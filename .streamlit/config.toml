@@ -1,0 +1,7 @@
+[theme]
+base="dark"
+primaryColor="#4CAF50"        # button color
+backgroundColor="#0E1117"     # app background
+secondaryBackgroundColor="#262730" # sidebar background
+textColor="#FAFAFA"           # text color
+font="sans serif"             # font type
